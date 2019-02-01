@@ -19,6 +19,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import manhattan_distances
 from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
@@ -98,9 +99,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         centers[0] = X[center_id]
 
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = euclidean_distances(
-        centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
-        squared=True)
+    closest_dist_sq = manhattan_distances(centers[0, np.newaxis], X)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -112,8 +111,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
                                         rand_vals)
 
         # Compute distances to center candidates
-        distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
+        print('Begin: City')
+        distance_to_candidates = manhattan_distances(X[candidate_ids], X)
 
         # Decide which candidate is the best
         best_candidate = None
@@ -295,6 +294,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         Returned only if `return_n_iter` is set to True.
 
     """
+    print('Begin: City')
     if n_init <= 0:
         raise ValueError("Invalid number of initializations."
                          " n_init=%d must be bigger than zero." % n_init)
@@ -1047,7 +1047,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _transform(self, X):
         """guts of transform method; no input validation"""
-        return euclidean_distances(X, self.cluster_centers_)
+        return manhattan_distances(X, self.cluster_centers_)
 
     def predict(self, X, sample_weight=None):
         """Predict the closest cluster each sample in X belongs to.
